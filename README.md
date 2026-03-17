@@ -6,7 +6,7 @@ AI-powered debate chatbot that generates arguments **for and against any topic**
 
 ## Demo Video
 Do checkout the demo video of the application:
-https://github.com/achushri07/DebateAI/blob/main/MusicAI.mp4
+[https://github.com/achushri07/DebateAI/blob/main/MusicAI.mp4](https://github.com/achushri07/DebateAI/blob/main/DebateAI.mp4)
 
 ---
 
