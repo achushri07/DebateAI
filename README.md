@@ -15,6 +15,11 @@ AI-powered debate chatbot that generates arguments **for and against any topic**
 
 ---
 
+## 📸 Screenshots
+<img width="1365" height="630" alt="image" src="https://github.com/user-attachments/assets/abcc3b7a-bf45-4a8f-8147-8a4f7e028429" />
+
+---
+
 ## Demo Behaviour
 
 User can:
