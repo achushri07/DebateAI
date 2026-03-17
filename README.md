@@ -51,9 +51,9 @@ The system switches between:
 
 ## Architecture
 
-User Query  
+User Query    
 ↓
-Flask API  
+Flask API    
 ↓
 Check if PDF uploaded  
 ↓
