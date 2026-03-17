@@ -52,20 +52,20 @@ The system switches between:
 ## Architecture
 
 User Query    
-↓
+↓  
 Flask API    
-↓
+↓  
 Check if PDF uploaded  
-↓
+↓  
 If No → Direct LLM response  
 If Yes → RAG Pipeline  
 
 RAG Pipeline    
-↓  
+↓    
 PDF Loader  
-↓  
+↓    
 Text Chunking    
-↓  
+↓    
 Embeddings  
 ↓  
 Vector Search  
