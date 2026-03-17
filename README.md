@@ -102,5 +102,3 @@ DebateAI/
 ## Author
 
 Achintya Srivastawa
-
-BTech Electronics and Communication Engineering
