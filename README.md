@@ -15,7 +15,7 @@ AI-powered debate chatbot that generates arguments **for and against any topic**
 
 ---
 
-## 📸 Screenshots
+## Screenshots
 <img width="1365" height="630" alt="image" src="https://github.com/user-attachments/assets/abcc3b7a-bf45-4a8f-8147-8a4f7e028429" />
 
 ---
@@ -76,6 +76,17 @@ Embeddings
 Vector Search  
 ↓  
 LLM Response  
+
+---
+
+### How RAG Works
+
+1. User uploads PDF
+2. PDF is split into chunks
+3. Chunks converted to embeddings
+4. Stored in Chroma vector database
+5. User query retrieves relevant chunks
+6. LLM generates debate arguments using retrieved context
 
 ---
 
