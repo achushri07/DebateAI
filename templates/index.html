@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DebateAI — Neural Debate Engine</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet" />
+</head>
+<body>
+
+  <!-- Animated grid background -->
+  <canvas id="grid-canvas"></canvas>
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <div class="logo">
+        <div class="logo-icon">
+          <svg viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="18" cy="18" r="14" stroke="url(#grad1)" stroke-width="1.5"/>
+            <path d="M10 18 L18 10 L26 18 L18 26 Z" stroke="url(#grad1)" stroke-width="1.5" fill="none"/>
+            <circle cx="18" cy="18" r="3" fill="url(#grad1)"/>
+            <defs>
+              <linearGradient id="grad1" x1="0" y1="0" x2="36" y2="36">
+                <stop offset="0%" stop-color="#00f5ff"/>
+                <stop offset="100%" stop-color="#7c3aed"/>
+              </linearGradient>
+            </defs>
+          </svg>
+        </div>
+        <span class="logo-text">DebateAI</span>
+      </div>
+    </div>
+
+    <div class="new-chat-section">
+      <button class="new-chat-btn" id="new-chat-btn" title="Start a new chat">
+        <div class="new-chat-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"/>
+            <line x1="12" y1="8" x2="12" y2="16"/>
+            <line x1="8" y1="12" x2="16" y2="12"/>
+          </svg>
+        </div>
+        <span class="new-chat-label">New Chat</span>
+      </button>
+    </div>
+
+    <div class="source-panel">
+      <div class="panel-label">KNOWLEDGE SOURCE</div>
+      <div class="upload-zone" id="upload-zone">
+        <input type="file" id="file-input" accept=".pdf" hidden />
+        <div class="upload-inner" id="upload-trigger">
+          <div class="upload-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="17 8 12 3 7 8"/>
+              <line x1="12" y1="3" x2="12" y2="15"/>
+            </svg>
+          </div>
+          <span class="upload-text">Drop PDF here</span>
+          <span class="upload-sub">or click to browse</span>
+        </div>
+      </div>
+
+      <!-- File loaded indicator -->
+      <div class="file-loaded" id="file-loaded" style="display:none;">
+        <div class="file-info">
+          <div class="file-dot"></div>
+          <span class="file-name" id="file-name-display">document.pdf</span>
+        </div>
+        <button class="clear-btn" id="clear-btn" title="Remove source">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"/>
+            <line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Upload progress -->
+      <div class="upload-progress" id="upload-progress" style="display:none;">
+        <div class="progress-bar">
+          <div class="progress-fill" id="progress-fill"></div>
+        </div>
+        <span class="progress-label" id="progress-label">Processing PDF…</span>
+      </div>
+
+      <div class="mode-indicator" id="mode-indicator">
+        <span class="mode-dot general"></span>
+        <span class="mode-text" id="mode-text">General Mode</span>
+      </div>
+    </div>
+
+    <div class="sidebar-footer">
+      <div class="model-badge">
+        <span class="badge-dot"></span>
+        <span>gpt-oss-120b via Groq</span>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main chat area -->
+  <main class="chat-main">
+
+    <div class="chat-topbar">
+      <div class="topbar-title">Neural Debate Engine</div>
+      <div class="topbar-sub">Argue both sides. Find truth in tension.</div>
+    </div>
+
+    <!-- Messages -->
+    <div class="chat-messages" id="chat-messages">
+      <div class="welcome-screen" id="welcome-screen">
+        <div class="welcome-glyph">
+          <svg viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="40" cy="40" r="35" stroke="url(#wg)" stroke-width="0.8" stroke-dasharray="4 3"/>
+            <circle cx="40" cy="40" r="22" stroke="url(#wg)" stroke-width="0.8"/>
+            <circle cx="40" cy="40" r="8" fill="url(#wg)" opacity="0.8"/>
+            <line x1="40" y1="5" x2="40" y2="18" stroke="url(#wg)" stroke-width="1"/>
+            <line x1="40" y1="62" x2="40" y2="75" stroke="url(#wg)" stroke-width="1"/>
+            <line x1="5" y1="40" x2="18" y2="40" stroke="url(#wg)" stroke-width="1"/>
+            <line x1="62" y1="40" x2="75" y2="40" stroke="url(#wg)" stroke-width="1"/>
+            <defs>
+              <linearGradient id="wg" x1="0" y1="0" x2="80" y2="80">
+                <stop offset="0%" stop-color="#00f5ff"/>
+                <stop offset="100%" stop-color="#7c3aed"/>
+              </linearGradient>
+            </defs>
+          </svg>
+        </div>
+        <h1 class="welcome-title">Ready to Debate</h1>
+        <p class="welcome-sub">Ask about any topic — I'll argue both sides with surgical precision.<br/>Optionally load a PDF to ground answers in your document.</p>
+        <div class="welcome-chips">
+          <button class="chip" onclick="fillInput('Sports and physical education')">Sports</button>
+          <button class="chip" onclick="fillInput('Artificial Intelligence ethics')">AI Ethics</button>
+          <button class="chip" onclick="fillInput('Social media and society')">Social Media</button>
+          <button class="chip" onclick="fillInput('Remote work vs office work')">Remote Work</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Input area -->
+    <div class="chat-input-area">
+      <div class="input-wrapper">
+        <label class="attach-btn" id="attach-btn" title="Attach PDF">
+          <input type="file" id="attach-file-input" accept=".pdf" hidden />
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+            <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
+          </svg>
+        </label>
+
+        <textarea
+          id="user-input"
+          placeholder="Enter a topic to debate…"
+          rows="1"
+          autocomplete="off"
+        ></textarea>
+
+        <button class="send-btn" id="send-btn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="22" y1="2" x2="11" y2="13"/>
+            <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+          </svg>
+        </button>
+      </div>
+      <div class="input-hint" id="input-hint">No source loaded — using general knowledge</div>
+    </div>
+  </main>
+
+  <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>
