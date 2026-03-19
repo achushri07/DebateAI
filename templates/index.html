@@ -12,8 +12,11 @@
   <!-- Animated grid background -->
   <canvas id="grid-canvas"></canvas>
 
+  <!-- Sidebar overlay (mobile) -->
+  <div class="sidebar-overlay" id="sidebar-overlay"></div>
+
   <!-- Sidebar -->
-  <aside class="sidebar">
+  <aside class="sidebar" id="sidebar">
     <div class="sidebar-header">
       <div class="logo">
         <div class="logo-icon">
@@ -103,8 +106,17 @@
   <main class="chat-main">
 
     <div class="chat-topbar">
-      <div class="topbar-title">Neural Debate Engine</div>
-      <div class="topbar-sub">Argue both sides. Find truth in tension.</div>
+      <button class="hamburger" id="hamburger-btn" title="Menu">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <line x1="3" y1="6"  x2="21" y2="6"/>
+          <line x1="3" y1="12" x2="21" y2="12"/>
+          <line x1="3" y1="18" x2="21" y2="18"/>
+        </svg>
+      </button>
+      <div class="topbar-info">
+        <div class="topbar-title">Neural Debate Engine</div>
+        <div class="topbar-sub">Argue both sides. Find truth in tension.</div>
+      </div>
     </div>
 
     <!-- Messages -->
