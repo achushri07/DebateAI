@@ -2,6 +2,19 @@
    DebateAI — script.js
    ============================================================ */
 
+// ---- Mobile Sidebar Toggle ----
+const sidebar        = document.getElementById('sidebar');
+const hamburgerBtn   = document.getElementById('hamburger-btn');
+const sidebarOverlay = document.getElementById('sidebar-overlay');
+
+function openSidebar()  { sidebar.classList.add('open');    sidebarOverlay.classList.add('active'); }
+function closeSidebar() { sidebar.classList.remove('open'); sidebarOverlay.classList.remove('active'); }
+
+hamburgerBtn.addEventListener('click', () => {
+  sidebar.classList.contains('open') ? closeSidebar() : openSidebar();
+});
+sidebarOverlay.addEventListener('click', closeSidebar);
+
 // ---- Animated Grid Canvas ----
 (function () {
   const canvas = document.getElementById('grid-canvas');
@@ -245,6 +258,7 @@ async function handleFileUpload(file) {
     fileLoaded.style.display = 'flex';
     setMode(true);
     showToast(`Loaded ${data.chunks} chunks from "${file.name}"`, 'success');
+    if (window.innerWidth <= 768) closeSidebar();
 
   } catch (err) {
     uploadProg.style.display = 'none';
@@ -265,10 +279,8 @@ function setMode(rag) {
 
 // ---- New Chat ----
 document.getElementById('new-chat-btn').addEventListener('click', async () => {
-  // Clear RAG state on server
   await fetch('/clear', { method: 'POST' });
 
-  // Clear messages and re-inject welcome screen
   messagesEl.innerHTML = '';
   const welcome = document.createElement('div');
   welcome.className = 'welcome-screen';
@@ -302,17 +314,14 @@ document.getElementById('new-chat-btn').addEventListener('click', async () => {
   `;
   messagesEl.appendChild(welcome);
 
-  // Reset file/PDF UI
   fileLoaded.style.display = 'none';
   uploadZone.style.display = '';
   uploadProg.style.display = 'none';
   setMode(false);
-
-  // Clear input
   userInput.value = '';
   userInput.style.height = 'auto';
-
   showToast('New chat started', 'success');
+  if (window.innerWidth <= 768) closeSidebar();
 });
 
 
