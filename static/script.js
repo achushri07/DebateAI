@@ -2,19 +2,6 @@
    DebateAI — script.js
    ============================================================ */
 
-// ---- Mobile Sidebar Toggle ----
-const sidebar        = document.getElementById('sidebar');
-const hamburgerBtn   = document.getElementById('hamburger-btn');
-const sidebarOverlay = document.getElementById('sidebar-overlay');
-
-function openSidebar()  { sidebar.classList.add('open');    sidebarOverlay.classList.add('active'); }
-function closeSidebar() { sidebar.classList.remove('open'); sidebarOverlay.classList.remove('active'); }
-
-hamburgerBtn.addEventListener('click', () => {
-  sidebar.classList.contains('open') ? closeSidebar() : openSidebar();
-});
-sidebarOverlay.addEventListener('click', closeSidebar);
-
 // ---- Animated Grid Canvas ----
 (function () {
   const canvas = document.getElementById('grid-canvas');
@@ -258,7 +245,6 @@ async function handleFileUpload(file) {
     fileLoaded.style.display = 'flex';
     setMode(true);
     showToast(`Loaded ${data.chunks} chunks from "${file.name}"`, 'success');
-    if (window.innerWidth <= 768) closeSidebar();
 
   } catch (err) {
     uploadProg.style.display = 'none';
@@ -279,8 +265,10 @@ function setMode(rag) {
 
 // ---- New Chat ----
 document.getElementById('new-chat-btn').addEventListener('click', async () => {
+  // Clear RAG state on server
   await fetch('/clear', { method: 'POST' });
 
+  // Clear messages and re-inject welcome screen
   messagesEl.innerHTML = '';
   const welcome = document.createElement('div');
   welcome.className = 'welcome-screen';
@@ -314,14 +302,17 @@ document.getElementById('new-chat-btn').addEventListener('click', async () => {
   `;
   messagesEl.appendChild(welcome);
 
+  // Reset file/PDF UI
   fileLoaded.style.display = 'none';
   uploadZone.style.display = '';
   uploadProg.style.display = 'none';
   setMode(false);
+
+  // Clear input
   userInput.value = '';
   userInput.style.height = 'auto';
+
   showToast('New chat started', 'success');
-  if (window.innerWidth <= 768) closeSidebar();
 });
 
 
@@ -378,12 +369,96 @@ function addMessage(role, text, source) {
 
   if (role === 'assistant') {
     bubble.innerHTML = renderMarkdown(text);
+    const hasTables = bubble.querySelectorAll('table').length > 0;
+
+    // ---- Table download button (only when tables exist) ----
+    if (hasTables) {
+      bubble.style.position = 'relative';
+      bubble.querySelectorAll('table').forEach((tbl) => {
+        const tblWrap = document.createElement('div');  // FIX: renamed from wrap to tblWrap
+        tblWrap.className = 'table-dl-wrap';
+        tblWrap.innerHTML = `
+          <button class="table-dl-icon-btn" title="Download table">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="7 10 12 15 17 10"/>
+              <line x1="12" y1="15" x2="12" y2="3"/>
+            </svg>
+          </button>
+          <div class="table-dl-dropdown">
+            <button class="table-dl-option" data-fmt="csv">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+              Export as CSV
+            </button>
+            <button class="table-dl-option" data-fmt="xlsx">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><polyline points="8 17 10 13 12 17"/><polyline points="12 17 14 13 16 17"/></svg>
+              Export as Excel
+            </button>
+            <button class="table-dl-option" data-fmt="png">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+              Export as PNG
+            </button>
+            <button class="table-dl-option" data-fmt="pdf">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
+              Export as PDF
+            </button>
+          </div>
+        `;
+        bubble.appendChild(tblWrap);  // FIX: use tblWrap
+
+        tblWrap.querySelector('.table-dl-icon-btn').addEventListener('click', (e) => {  // FIX: tblWrap
+          e.stopPropagation();
+          tblWrap.classList.toggle('open');  // FIX: tblWrap
+        });
+        document.addEventListener('click', () => tblWrap.classList.remove('open'));  // FIX: tblWrap
+        tblWrap.querySelectorAll('.table-dl-option').forEach(btn => {  // FIX: tblWrap
+          btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            downloadTable(tbl, btn.dataset.fmt);
+            tblWrap.classList.remove('open');  // FIX: tblWrap
+          });
+        });
+      });
+    }
+
+    // FIX: removed the else { bubble.textContent = text; } block entirely
+
   } else {
-    bubble.textContent = text;
+    bubble.textContent = text;  // for user messages
   }
 
   wrap.appendChild(label);
   wrap.appendChild(bubble);
+
+  // Copy bar appended AFTER bubble so it sits below it
+  if (role === 'assistant') {
+    const hasTables = bubble.querySelectorAll('table').length > 0;
+    if (!hasTables) {
+      const copyBar = document.createElement('div');
+      copyBar.className = 'copy-bar';
+      copyBar.innerHTML = `
+        <button class="copy-btn" title="Copy response">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="9" y="9" width="13" height="13" rx="2"/>
+            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+          </svg>
+        </button>
+      `;
+      wrap.appendChild(copyBar);
+
+      copyBar.querySelector('.copy-btn').addEventListener('click', () => {
+        navigator.clipboard.writeText(text).then(() => {
+          const btn = copyBar.querySelector('.copy-btn');
+          btn.classList.add('copied');
+          btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`;
+          setTimeout(() => {
+            btn.classList.remove('copied');
+            btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>`;
+          }, 2000);
+        });
+      });
+    }
+  }
 
   if (source) {
     const tag = document.createElement('div');
@@ -420,6 +495,158 @@ function removeTyping(id) {
   if (el) el.remove();
 }
 
+// ---- Table Download Engine ----
+function tableToMatrix(tbl) {
+  const rows = [];
+  tbl.querySelectorAll('tr').forEach(tr => {
+    const cells = [];
+    tr.querySelectorAll('th, td').forEach(td => cells.push(td.innerText.trim()));
+    if (cells.length) rows.push(cells);
+  });
+  return rows;
+}
+
+function downloadTable(tbl, fmt) {
+  const matrix = tableToMatrix(tbl);
+  const ts = Date.now();
+
+  if (fmt === 'csv') {
+    const csv = matrix.map(r => r.map(c => `"${c.replace(/"/g,'""')}"`).join(',')).join('\n');
+    triggerDownload('data:text/csv;charset=utf-8,' + encodeURIComponent(csv), `debate-table-${ts}.csv`);
+
+  } else if (fmt === 'xlsx') {
+    // Build a minimal XLSX using SheetJS loaded from CDN
+    if (typeof XLSX === 'undefined') {
+      const s = document.createElement('script');
+      s.src = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+      s.onload = () => doXlsx(matrix, ts);
+      document.head.appendChild(s);
+    } else {
+      doXlsx(matrix, ts);
+    }
+
+  } else if (fmt === 'png') {
+    doPng(tbl, ts);
+
+  } else if (fmt === 'pdf') {
+    doPdf(tbl, ts);
+  }
+}
+
+function triggerDownload(href, name) {
+  const a = document.createElement('a');
+  a.href = href;
+  a.download = name;
+  a.click();
+}
+
+function doXlsx(matrix, ts) {
+  const wb = XLSX.utils.book_new();
+  const ws = XLSX.utils.aoa_to_sheet(matrix);
+  XLSX.utils.book_append_sheet(wb, ws, 'Debate');
+  XLSX.writeFile(wb, `debate-table-${ts}.xlsx`);
+}
+
+function doPng(tbl, ts) {
+  // Clone table into a styled off-screen container and use canvas
+  const wrapper = document.createElement('div');
+  wrapper.style.cssText = `
+    position:fixed; left:-9999px; top:0;
+    background:#111820; padding:20px; border-radius:10px;
+    font-family:'JetBrains Mono',monospace; font-size:13px; color:#e2e8f0;
+  `;
+  // Inline-style the cloned table for canvas capture
+  const clone = tbl.cloneNode(true);
+  clone.style.cssText = 'border-collapse:collapse; width:auto; min-width:400px;';
+  clone.querySelectorAll('th').forEach(th => {
+    th.style.cssText = 'background:#0d2a2a; color:#00f5ff; padding:8px 14px; border:1px solid rgba(0,245,255,0.2); text-align:left; font-weight:600;';
+  });
+  clone.querySelectorAll('td').forEach((td, i) => {
+    td.style.cssText = 'padding:7px 14px; border:1px solid rgba(0,245,255,0.1); color:#94a3b8; vertical-align:top;';
+    if (td.cellIndex === 0) td.style.color = '#a855f7';
+  });
+  wrapper.appendChild(clone);
+  document.body.appendChild(wrapper);
+
+  if (typeof html2canvas === 'undefined') {
+    const s = document.createElement('script');
+    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
+    s.onload = () => captureAndDownload(wrapper, ts);
+    document.head.appendChild(s);
+  } else {
+    captureAndDownload(wrapper, ts);
+  }
+}
+
+function captureAndDownload(el, ts) {
+  html2canvas(el, { backgroundColor: '#111820', scale: 2, useCORS: true }).then(canvas => {
+    triggerDownload(canvas.toDataURL('image/png'), `debate-table-${ts}.png`);
+    document.body.removeChild(el);
+  });
+}
+
+function doPdf(tbl, ts) {
+  if (typeof window.jspdf === 'undefined') {
+    const s = document.createElement('script');
+    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+    s.onload = () => {
+      const s2 = document.createElement('script');
+      s2.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js';
+      s2.onload = () => doPdfRender(tbl, ts);
+      document.head.appendChild(s2);
+    };
+    document.head.appendChild(s);
+  } else {
+    doPdfRender(tbl, ts);
+  }
+}
+
+function doPdfRender(tbl, ts) {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ orientation: 'landscape', unit: 'pt', format: 'a4' });
+  const matrix = tableToMatrix(tbl);
+  const head = [matrix[0]];
+  const body = matrix.slice(1);
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const colCount = head[0].length;
+  const colWidth = (pageWidth - 80) / colCount;
+
+  doc.autoTable({
+    head,
+    body,
+    startY: 40,
+    margin: { left: 40, right: 40, top: 40, bottom: 40 },
+    tableWidth: pageWidth - 80,
+    columnStyles: Object.fromEntries(
+      Array.from({ length: colCount }, (_, i) => [i, { cellWidth: (pageWidth - 80) / colCount }])
+    ),
+    styles: {
+      font: 'helvetica',
+      fontSize: 10,
+      cellPadding: 8,
+      overflow: 'linebreak',
+      valign: 'top',
+      minCellHeight: 10,
+      textColor: [0, 0, 0],
+      lineColor: [180, 180, 180],
+      lineWidth: 0.5,
+    },
+    headStyles: {
+      fillColor: [240, 240, 240],
+      textColor: [0, 0, 0],
+      fontStyle: 'bold',
+      halign: 'left',
+    },
+    bodyStyles: {
+      fillColor: [255, 255, 255],
+      textColor: [0, 0, 0],
+    },
+    alternateRowStyles: {
+      fillColor: [248, 248, 248],
+    },
+  });
+  doc.save(`debate-table-${ts}.pdf`);
+}
 
 // ---- Chip helper ----
 function fillInput(text) {
